@@ -27,6 +27,8 @@ export const Shippings = () => {
     "get"
   );
 
+  console.log('test');
+
   const {
     mutate: addNewAddress,
     isPending,
