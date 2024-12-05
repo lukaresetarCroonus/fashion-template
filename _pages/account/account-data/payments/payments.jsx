@@ -101,6 +101,7 @@ export const Payments = () => {
         onClick={() => {
           setData({
             ...new_address,
+            id_country: 0,
             set_default: false,
           });
 

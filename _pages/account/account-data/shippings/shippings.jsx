@@ -93,6 +93,10 @@ export const Shippings = () => {
         icon={`plus`}
         button={`Dodajte novu adresu`}
         onClick={() => {
+          setData({
+            ...data,
+            id_country: 0,
+          })
           setShow({
             ...show,
             show: true,

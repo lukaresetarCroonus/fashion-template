@@ -40,7 +40,8 @@
     "placeholder": "Država",
     "options": [],
     "type": "select",
-    "fill": "/customers/billing-address/ddl/id_country"
+    "fill": "/customers/billing-address/ddl/id_country",
+    "required": true
   },
   {
     "id": 7,
