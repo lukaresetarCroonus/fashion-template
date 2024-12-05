@@ -8,6 +8,7 @@ import {
   useGetAddress,
   useIsLoggedIn,
   useRemoveFromCart,
+  useGetAccountData
 } from "@/hooks/ecommerce.hooks";
 import { handleCreditCard, handleSetData } from "@/components/Cart/functions";
 import { useRouter } from "next/navigation";
@@ -57,6 +58,11 @@ export const CheckoutData = ({
   const { data: loggedIn } = useIsLoggedIn();
 
   const { data: billing_addresses } = useBillingAddresses(loggedIn);
+
+  const { data: billing_addresses_test} = useGetAccountData(
+    `/customers/billing-address`,
+    "list"
+  );
 
   const { data: form, isLoading } = useGetAddress(
     billing_addresses?.length > 1 ? selected?.id : billing_addresses?.[0]?.id,
@@ -117,6 +123,17 @@ export const CheckoutData = ({
       );
     }
   }, [formData?.delivery_method]);
+
+  useEffect(() =>{
+    const defaultAddress = billing_addresses_test.find(address => address.set_default === 1);
+    if (defaultAddress) {
+      const {id: billing_id} = defaultAddress;
+      setSelected((prev) => ({
+        ...prev,
+        id: billing_id,
+      }))
+    }
+  },[billing_addresses_test])
 
   const router = useRouter();
 
@@ -208,7 +225,7 @@ export const CheckoutData = ({
   return (
     <div className={`mt-5 grid grid-cols-5 gap-[3.75rem]`}>
       <div className={`col-span-5 flex flex-col lg:col-span-3`}>
-        {show_options === "true" && billing_addresses?.length > 1 && (
+        {show_options === "false" && billing_addresses?.length > 1 && (
           <SelectInput
             className={`!w-fit`}
             errors={errorsTmp}
@@ -238,7 +255,7 @@ export const CheckoutData = ({
           refreshSummary={refreshSummary}
         />
 
-        {show_options === "true" && (
+        {show_options === "false" && (
           <CheckboxInput
             className={`mb-5`}
             placeholder={`Koristi iste podatke za dostavu i naplatu`}
