@@ -140,6 +140,25 @@ export const CheckoutData = ({
 
   const router = useRouter();
 
+  const formatCheckoutFields = (fields, data) => {
+    if (data && Number(data?.id_country_shipping) === 193) {
+      return fields
+        ?.map((field) => {
+          if (field?.name === "town_name_shipping") {
+            return {
+              ...field,
+              name: "id_town_shipping",
+              type: "select",
+              fill: `/customers/billing-address/ddl/id_town?id_country=${data?.id_country}`,
+            };
+          }
+          return field;
+        })
+        .filter(Boolean); // Remove null fields from the array
+    }
+    return fields;
+  };
+
   const filterOutProductsOutOfStock = (data) => {
     const productsOutOfStock = [];
     data?.forEach((item) => {
@@ -278,7 +297,7 @@ export const CheckoutData = ({
             className={`grid grid-cols-2 gap-x-5`}
             data={dataTmp}
             errors={errorsTmp}
-            fields={fields}
+            fields={formatCheckoutFields(fields,dataTmp)}
             isPending={isPending}
             handleSubmit={() => {}}
             showOptions={false}
@@ -289,7 +308,16 @@ export const CheckoutData = ({
                   ...prev,
                   country_name_shipping: e?.target?.selectedOptions[0]?.text,
                 }));
-              } else {
+              } else if(e?.target?.name === "id_town_shipping") {
+                console.log(e.target.selectedOptions[0]);
+                handleInputChange(e, setDataTmp, setErrorsTmp);
+                setDataTmp((prev) => ({
+                ...prev,
+                town_name_shipping: e?.target?.selectedOptions[0]?.text,
+              }));
+              }
+              else {
+                
                 handleInputChange(e, setDataTmp, setErrorsTmp);
               }
             }}
