@@ -60,7 +60,7 @@ export const CheckoutData = ({
 
   const { data: loggedIn } = useIsLoggedIn();
 
-  const { data: billing_addresses } = useBillingAddresses(loggedIn);
+  const { data: billing_addresses } = userLoggedIn ? useBillingAddresses() : [];
 
   const { data: user_billing_addresses} = userLoggedIn ? useGetAccountData(
     `/customers/billing-address`,
@@ -68,7 +68,7 @@ export const CheckoutData = ({
   ): [];
 
   const { data: form, isLoading } = useGetAddress(
-    billing_addresses?.length > 1 ? selected?.id : billing_addresses?.[0]?.id,
+    billing_addresses?.length > 1 && selected?.id ? selected?.id : billing_addresses?.[0]?.id,
     "billing",
     loggedIn && Boolean(billing_addresses?.length)
   );
@@ -273,7 +273,7 @@ export const CheckoutData = ({
           />
         )}
 
-        {show_options === "true" && !selected?.use_same_data && (
+        {show_options === "false" && !selected?.use_same_data && (
           <Form
             className={`grid grid-cols-2 gap-x-5`}
             data={dataTmp}
@@ -408,8 +408,12 @@ export const CheckoutData = ({
           onClick={() => {
             let err = [];
             (required ?? [])?.forEach((key) => {
-              if (!dataTmp[key] || dataTmp[key]?.length === 0) {
-                err.push(key);
+              if(dataTmp.id_country_shipping == '-' || dataTmp.id_country_shipping == 0) {
+                err = [...err,'id_country_shipping']
+              }else {
+                if (!dataTmp[key] || dataTmp[key]?.length === 0) {
+                  err.push(key);
+                }
               }
             });
             setErrorsTmp(err);
