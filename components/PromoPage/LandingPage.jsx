@@ -34,7 +34,6 @@ const LandingPage = ({ slug }) => {
   if (isErrorBasicData) {
     notFound;
   }
-  console.log('basicData',basicData);
 
   return (
     <>
@@ -141,7 +140,6 @@ const LandingPage = ({ slug }) => {
                 </Link>
               ) : (
                 conditions.items.map((item) => {
-                  console.log('i',item);
                   return (
                     <Suspense
                     fallback={<div>Loading...</div>}
@@ -177,12 +175,12 @@ const LandingPage = ({ slug }) => {
                       className={`col-span-1 flex flex-col items-center justify-center p-5 gap-3 border border-croonus-1 rounded-2xl`}
                     >
                       {thumbItem?.name && (
-                        <div href={`${thumbItem?.url}`}>
+                        <Link href={`${thumbItem?.url}`}>
                           {" "}
                           <h1 className={`text-2xl font-medium`}>
                             {thumbItem?.name}
                           </h1>
-                        </div>
+                        </Link>
                       )}
                       {thumbItem?.description && (
                         <p className={`text-center`}>
@@ -190,7 +188,7 @@ const LandingPage = ({ slug }) => {
                         </p>
                       )}
                       {thumbItem?.thumb_image && (
-                        <div href={`${thumbItem?.url}`}>
+                        <Link href={`${thumbItem?.url}`}>
                           {" "}
                           <div className={``}>
                             <Image
@@ -204,16 +202,16 @@ const LandingPage = ({ slug }) => {
                               className={`w-full h-auto`}
                             />
                           </div>
-                        </div>
+                        </Link>
                       )}
                       {thumbItem?.button && (
-                        <div href={`${thumbItem?.url}`} className={`w-full`}>
+                        <Link href={`${thumbItem?.url}`} className={`w-full`}>
                           <button
                             className={`rounded-[5rem] bg-croonus-2 text-white p-2 mt-2 w-full hover:scale-105 hover:bg-opacity-90 transition-all duration-500`}
                           >
                             {thumbItem?.button}
                           </button>
-                        </div>
+                        </Link>
                       )}
                     </div>
                   );
