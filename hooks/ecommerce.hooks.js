@@ -92,7 +92,7 @@ export const useLandingPages = () => {
  * @returns {Object} - Data fetched from the `/landing-pages/basic-data` endpoint.
  */
 export const useLandingPageBasicData = ({ slug }) => {
-  return useQuery({
+  return useSuspenseQuery({
     queryKey: ["landingPageBasicData", { slug: slug }],
     queryFn: async () => {
       return await GET(`/landing-pages/basic-data/${slug}`).then((res) => {
