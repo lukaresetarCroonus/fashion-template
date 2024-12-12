@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useContext, useEffect, useState } from "react";
 import {
   useBillingAddresses,
   useCheckout,
@@ -8,6 +8,7 @@ import {
   useGetAddress,
   useIsLoggedIn,
   useRemoveFromCart,
+  useGetAccountData,
 } from "@/hooks/ecommerce.hooks";
 import { handleCreditCard, handleSetData } from "@/components/Cart/functions";
 import { useRouter } from "next/navigation";
@@ -28,6 +29,9 @@ import Link from "next/link";
 import fields from "./shipping.json";
 import Cookies from "js-cookie";
 import Spinner from "@/components/UI/Spinner";
+import { userContext } from "@/context/userContext";
+
+import FreeDeliveryScale from "./FreeDeliveryScale";
 
 export const CheckoutData = ({
   className,
@@ -54,12 +58,20 @@ export const CheckoutData = ({
     use_same_data: true,
   });
 
+  const { loggedIn: userLoggedIn } = useContext(userContext);
+
   const { data: loggedIn } = useIsLoggedIn();
 
-  const { data: billing_addresses } = useBillingAddresses(loggedIn);
+  const { data: billing_addresses } = userLoggedIn ? useBillingAddresses() : [];
+
+  const { data: user_billing_addresses } = userLoggedIn
+    ? useGetAccountData(`/customers/billing-address`, "list")
+    : [];
 
   const { data: form, isLoading } = useGetAddress(
-    billing_addresses?.length > 1 ? selected?.id : billing_addresses?.[0]?.id,
+    billing_addresses?.length > 1 && selected?.id
+      ? selected?.id
+      : billing_addresses?.[0]?.id,
     "billing",
     loggedIn && Boolean(billing_addresses?.length)
   );
@@ -118,7 +130,50 @@ export const CheckoutData = ({
     }
   }, [formData?.delivery_method]);
 
+  useEffect(() => {
+    const defaultAddress = user_billing_addresses?.find(
+      (address) => address.set_default === 1
+    );
+    if (defaultAddress) {
+      const { id: billing_id } = defaultAddress;
+      setSelected((prev) => ({
+        ...prev,
+        id: billing_id,
+      }));
+    }
+  }, [user_billing_addresses]);
+
   const router = useRouter();
+
+  //Function to switch api use of country depending on user logged in status
+  const formatCountry = (fields)  =>{
+    fields.map(field => {
+      if(field.name === 'id_country_shipping') {
+        return {
+          ...field,fill: userLoggedIn ? `/customers/shipping-address/ddl/id_country`: `checkout/ddl/id_country`
+        }
+      }
+    })
+  }
+  //Function to switch field from input to select and changing api depending on user logged in status
+  const formatCheckoutFields = (fields, data) => {
+    if (data && Number(data?.id_country_shipping) === 193) {
+      return fields
+        ?.map((field) => {
+          if (field?.name === "town_name_shipping") {
+            return {
+              ...field,
+              name: "id_town_shipping",
+              type: "select",
+              fill:userLoggedIn ? '/customers/shipping-address/ddl/id_town?id_country=${data?.id_country}' : `checkout/ddl/id_town?id_country=${data?.id_country_shipping}`,
+            };
+          }
+          return field;
+        })
+        .filter(Boolean); // Remove null fields from the array
+    }
+    return fields;
+  };
 
   const filterOutProductsOutOfStock = (data) => {
     const productsOutOfStock = [];
@@ -185,9 +240,11 @@ export const CheckoutData = ({
   );
 
   useEffect(() => {
+    formatCountry(fields);
     if (selected?.use_same_data) {
       return handleSetData("same_data", form, dataTmp, setDataTmp);
     } else {
+      
       return handleSetData("different_data", form, dataTmp, setDataTmp);
     }
   }, [selected?.id, selected?.use_same_data]);
@@ -206,13 +263,13 @@ export const CheckoutData = ({
   const show_options = process.env.SHOW_CHECKOUT_SHIPPING_FORM;
 
   return (
-    <div className={`mt-5 grid grid-cols-5 gap-[3.75rem]`}>
-      <div className={`col-span-5 flex flex-col lg:col-span-3`}>
-        {show_options === "true" && billing_addresses?.length > 1 && (
+    <div className={`mt-5 grid grid-cols-6 2xl:grid-cols-5 gap-10 2xl:gap-16`}>
+      <div className={`col-span-6 flex flex-col lg:col-span-3`}>
+        {show_options === "false" && billing_addresses?.length > 1 && (
           <SelectInput
             className={`!w-fit`}
             errors={errorsTmp}
-            placeholder={`Izaberite adresu plaÄ‡anja`}
+            placeholder={`Izaberite adresu plaćanja`}
             options={billing_addresses}
             onChange={(e) => {
               if (e.target.value !== "none") {
@@ -238,7 +295,7 @@ export const CheckoutData = ({
           refreshSummary={refreshSummary}
         />
 
-        {show_options === "true" && (
+        {show_options === "false" && (
           <CheckboxInput
             className={`mb-5`}
             placeholder={`Koristi iste podatke za dostavu i naplatu`}
@@ -253,12 +310,12 @@ export const CheckoutData = ({
           />
         )}
 
-        {show_options === "true" && !selected?.use_same_data && (
+        {show_options === "false" && !selected?.use_same_data && (
           <Form
             className={`grid grid-cols-2 gap-x-5`}
             data={dataTmp}
             errors={errorsTmp}
-            fields={fields}
+            fields={formatCheckoutFields(fields, dataTmp)}
             isPending={isPending}
             handleSubmit={() => {}}
             showOptions={false}
@@ -268,6 +325,18 @@ export const CheckoutData = ({
                 setDataTmp((prev) => ({
                   ...prev,
                   country_name_shipping: e?.target?.selectedOptions[0]?.text,
+                }));
+                if (e.target.selectedOptions[0]!== 193) {
+                  setDataTmp((prev) => ({
+                    ...prev,
+                    town_name_shipping: ''
+                  }))
+                }
+              } else if (e?.target?.name === "id_town_shipping") {
+                handleInputChange(e, setDataTmp, setErrorsTmp);
+                setDataTmp((prev) => ({
+                  ...prev,
+                  town_name_shipping: e?.target?.selectedOptions[0]?.text,
                 }));
               } else {
                 handleInputChange(e, setDataTmp, setErrorsTmp);
@@ -291,9 +360,11 @@ export const CheckoutData = ({
         />
       </div>
 
-      <div className={`col-span-5 flex flex-col gap-3 lg:col-span-2`}>
+      <div
+        className={`col-span-6 md:col-span-4 lg:col-span-3 flex flex-col gap-3 2xl:col-span-2`}
+      >
         <div
-          className={`customScroll mb-16 flex max-h-[400px] flex-col gap-5 overflow-y-auto sm:mb-10`}
+          className={`customScroll mb-16 pr-2 flex max-h-[400px] flex-col gap-5 overflow-y-auto sm:mb-10`}
         >
           {(items ?? [])?.map(
             ({
@@ -329,7 +400,7 @@ export const CheckoutData = ({
           <h3
             className={`pb-4 text-[0.965rem] font-light ${className} uppercase underline`}
           >
-            VREDNOST VAÅ E KORPE
+            VREDNOST VAŠE KORPE
           </h3>
           <CheckoutTotals
             totals={totals}
@@ -369,14 +440,14 @@ export const CheckoutData = ({
                 href={`/stranica-u-izradi`}
                 target={`_blank`}
               >
-                <span> OpÅ¡tim uslovima koriÅ¡Ä‡enja</span>
+                <span> Opštim uslovima korišćenja</span>
               </a>{" "}
               ECOMMERCE ONLINE SHOP-a.
             </label>
           </div>
           {errorsTmp?.includes("accept_rules") && (
             <p className={`text-red-500 text-[0.75rem]`}>
-              Molimo Vas da prihvatite uslove koriÅ¡Ä‡enja.
+              Molimo Vas da prihvatite uslove korišćenja.
             </p>
           )}
         </div>
@@ -388,8 +459,16 @@ export const CheckoutData = ({
           onClick={() => {
             let err = [];
             (required ?? [])?.forEach((key) => {
-              if (!dataTmp[key] || dataTmp[key]?.length === 0) {
-                err.push(key);
+              //Error handling for countries
+              if(dataTmp.id_country_shipping == '-' || dataTmp.id_country_shipping == 0) {
+                err = [...err,'id_country_shipping']
+              }else if (dataTmp.id_town_shipping === "") {
+                err = [...err,'id_town_shipping']
+              } 
+              else {
+                if (!dataTmp[key] || dataTmp[key]?.length === 0) {
+                  err.push(key);
+                }
               }
             });
             setErrorsTmp(err);
@@ -400,8 +479,11 @@ export const CheckoutData = ({
             }
           }}
         >
-          {isPending ? "OBRADA..." : "ZAVRÅ I KUPOVINU"}
+          {isPending ? "OBRADA..." : "ZAVRŠI KUPOVINU"}
         </button>
+        <div className="hidden xl:block w-full">
+          <FreeDeliveryScale summary={summary} />
+        </div>
       </div>
       <NoStockModal
         className={className}
@@ -451,8 +533,8 @@ const NoStockModal = ({
           <h3 className={`mt-4 text-center text-xl font-semibold ${className}`}>
             U korpi su proizvodi koji trenutno nisu na stanju.
           </h3>
-          <p className={`mt-2 text-center text-base font-normal ${className}`}>
-            Kako bi zavrÅ¡ili porudÅ¾binu, morate izbrisati sledeÄ‡e artikle iz
+          <p className={`mt-2 text-left text-base font-normal ${className}`}>
+            Kako bi završili porudžbinu, morate izbrisati sledeće artikle iz
             korpe:
           </p>
           <div
