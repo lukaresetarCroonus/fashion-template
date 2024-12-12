@@ -263,7 +263,7 @@ const Contact = () => {
                   type={`checkbox`}
                   name={`accept_rules`}
                   id={`accept_rules`}
-                  value={formData.accept_rules}
+                  checked={formData.accept_rules}
                   onChange={handleChange}
                   className={`${
                     errors.includes("accept_rules")
