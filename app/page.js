@@ -9,16 +9,16 @@ import IndexSlider from "@/components/IndexSlider/IndexSlider";
 import NewInProducts from "@/components/NewInProducts/NewInProducts";
 import { Suspense } from "react";
 
-const getBanners = () => {
+const getBanners = async() => {
   return get("/banners/index_slider").then((res) => res?.payload);
 };
-const getMobileBanners = () => {
+const getMobileBanners = async() => {
   return get("/banners/index_slider_mobile").then((res) => res?.payload);
 };
-const getBannersCategories = () => {
+const getBannersCategories = async() => {
   return get("/banners/index-first-banner").then((res) => res?.payload);
 };
-const getRecommendedProducts = () => {
+const getRecommendedProducts = async() => {
   return list("/products/section/list/recommendation").then(
     (res) => res?.payload?.items
   );

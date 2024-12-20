@@ -25,9 +25,9 @@ export const handleLogin = (
 };
 
 export const handleLogout = (setIsLoggedIn, invalidateBadges, logOut) => {
+  logOut();
   setIsLoggedIn(false);
   const device_token = Cookies.get("device_token");
-  logOut();
   Cookies.set("customer_token", device_token, { expires: 365 });
   invalidateBadges(["cartBadge", "wishlistBadge"]).then((r) => r);
   window.location.href = "/login";

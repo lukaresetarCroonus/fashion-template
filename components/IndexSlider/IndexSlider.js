@@ -13,7 +13,7 @@ function extractYoutubeId(url) {
   return match ? match[1] : null;
 }
 
-const RenderBanner = ({ banner }) => {
+const RenderBanner = ({ banner,is_mobile }) => {
   switch (banner.type) {
     case "image":
       return (
@@ -32,11 +32,9 @@ const RenderBanner = ({ banner }) => {
       const videoUrl = banner.video_url;
 
       const src =
-        videoProvider === "youtube"
-          ? `${videoUrl}?autoplay=1&mute=1&loop=1&playsinline=1&controls=0&playlist=${extractYoutubeId(
-              videoUrl
-            )}`
-          : `${videoUrl}?autoplay=1&muted=1&loop=1&background=1&playsinline=1`;
+  videoProvider === "youtube"
+    ? `https://www.youtube.com/embed/${extractYoutubeId(videoUrl)}?autoplay=1&mute=1&loop=1&playsinline=1&controls=0&playlist=${extractYoutubeId(videoUrl)}`
+    : `${videoUrl}?autoplay=1&muted=1&loop=1&background=1&playsinline=1}`;
 
       return (
         <iframe
@@ -49,9 +47,12 @@ const RenderBanner = ({ banner }) => {
           allowFullScreen
         ></iframe>
       );
-    default:
+      case "video":
       return (
-        <video
+        <>
+        {is_mobile && ``}
+                <video
+        key={banner?.file}
           width={banner?.file_data?.banner_position?.width}
           height={banner?.file_data?.banner_position?.height}
           className="bg-fixed w-full h-full object-cover"
@@ -62,9 +63,14 @@ const RenderBanner = ({ banner }) => {
           controls={false}
         >
           <source src={convertHttpToHttps(banner?.file)} type="video/mp4" />
+          <source src={convertHttpToHttps(banner?.file.replace(".mp4", ".webm"))} type="video/webm" />
           Your browser does not support the video tag.
         </video>
+        </>
+
       );
+      default:
+        break
   }
 };
 
@@ -170,7 +176,7 @@ const IndexSlider = ({ banners, mobileBanners }) => {
                 }
               >
                 <div className="relative sm:h-full">
-                  <RenderBanner banner={banner} />
+                  <RenderBanner banner={banner} is_mobile={is_mobile} />
                   <Link
                     href={`${banner?.url ?? `/stranica-u-izradi`}`}
                     target={`${banner?.target}` ?? "_self"}

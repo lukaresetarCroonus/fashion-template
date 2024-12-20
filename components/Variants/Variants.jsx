@@ -331,9 +331,7 @@ export default function Variants({
             <label
               htmlFor={item.id}
               className={
-                item.attribute.name === "Boja"
-                  ? `hidden`
-                  : `max-lg:text-left text-[0.938rem] font-bold max-md:font-normal min-w-[5.619rem]`
+                `max-lg:text-left text-[0.938rem] font-bold max-md:font-normal min-w-[5.619rem]`
               }
             >
               {item.attribute.name}
@@ -410,7 +408,7 @@ export default function Variants({
                                     )}
                                     width={65}
                                     height={85}
-                                    alt={``}
+                                    alt={`Boja`}
                                     priority={true}
                                     className="h-full object-cover"
                                   />
